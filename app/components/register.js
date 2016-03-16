@@ -1,5 +1,6 @@
 'use strict';
 const USER_KEY = '@meteorChat:userKey'
+import ddp from '../config/ddp';
 import NavigationBar from 'react-native-navbar';
 import React, {
   AppRegistry,
@@ -68,8 +69,8 @@ class Register extends React.Component{
           style={styles.button}
           onPress={() => {
             let {username, password} = this.state;
-            /*if (username != '' && password != '') {
-              // console.log('CREDS', username, password);
+            if (username != '' && password != '') {
+              console.log('CREDS', username, password);
               ddp.call('registerUser', [this.state.username, this.state.password])
                 .then(() => {
                   return ddp.loginWithPassword(this.state.username, this.state.password);
@@ -77,7 +78,7 @@ class Register extends React.Component{
                 .then((userId) => {
                   this.props.loggedIn(userId, username);
                 });
-            }*/
+            }
           }}>
           <Text style={styles.buttonText}>Sign Up</Text>
         </TouchableHighlight>
@@ -99,9 +100,7 @@ let styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f7f7f7',
     flexDirection: 'column',
-    alignItems: 'stretch',
-    justifyContent: 'center',
-    padding: 20
+    padding: 20,
   },
   image: {
     alignSelf: 'center',

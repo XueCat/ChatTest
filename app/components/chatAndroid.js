@@ -1,5 +1,6 @@
 'use strict';
 const USER_KEY = '@meteorChat:userKey';
+import ddp from '../config/ddp';
 import NavigationBar from 'react-native-navbar';
 import MessageBox from './messageBox';
 import InvertibleScrollView from 'react-native-invertible-scroll-view';
@@ -29,6 +30,35 @@ class ChatAndroid extends React.Component{
       newMessage: '',
     }
   }
+
+  componentDidMount(){
+    this.refs.invertible.scrollTo({x:0,y:0});
+  }
+
+  componentWillMount(){
+    let self = this;
+    ddp.subscribe('messages', [])
+      .then(() => {
+        let messagesObserver = ddp.collections.observe(() => {
+          let messages = [];
+          if (ddp.collections.messages) {
+            messages = ddp.collections.messages.find({});
+          }
+          return messages;
+        });
+        this.setState({messagesObserver: messagesObserver})
+        messagesObserver.subscribe((results) => {
+          this.setState({messages: results});
+          this.refs.invertible.scrollTo({x:0,y:0});
+        })
+      })
+  }
+  componentWillUnmount() {
+   if (this.state.messagesObserver) {
+     this.state.messagesObserver.dispose();
+   }
+  }
+
   render(){
     console.log('MESSAGES', this.state.messages);
     let self = this;
@@ -37,6 +67,7 @@ class ChatAndroid extends React.Component{
       title: 'Logout',
       tintColor: '#fff',
       handler: function onNext() {
+        ddp.logout();
         self.props.navigator.push({
           name: 'SignupAndroid'
         })
@@ -66,6 +97,7 @@ class ChatAndroid extends React.Component{
                   avatarUrl: '',
                 };
                 this.setState({newMessage: ''});
+                ddp.call('messageCreate', [options]);
               }
             }}
             underlayColor='red'>

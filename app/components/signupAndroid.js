@@ -3,7 +3,6 @@ const USER_KEY = '@meteorChat:userKey'
 import NavigationBar from 'react-native-navbar';
 import Login from './login';
 import Register from './register';
-//import ddp from '../config/ddp';
 import React, {
   AppRegistry,
   StyleSheet,
@@ -17,8 +16,8 @@ class SignupAndroid extends React.Component{
   constructor(props) {
     super(props);
     this.state = {
-      register: false,
-      login: true,
+      register: true,
+      login: false,
       userId: '',
       loggedIn: false,
     }

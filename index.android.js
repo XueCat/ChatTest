@@ -4,6 +4,7 @@
  */
 'use strict';
 const USER_KEY = '@meteorChat:userKey';
+import ddp from './app/config/ddp';
 import ChatAndroid from './app/components/chatAndroid.js';
 import SignupAndroid from './app/components/signupAndroid.js';
 import React, {
@@ -16,18 +17,53 @@ import React, {
   AsyncStorage,
 } from 'react-native';
 
+global.process.nextTick = setImmediate;
+
 class ChatTest extends Component {
-  constructor(props){
+  constructor(props) {
     super(props);
     this.state = {
       userId:1,
-      initialRoute: 'SignupAndroid',
+      initialRoute: '',
       loggedIn: false,
-      username: 'a',
+      username: '',
     }
   }
+
+  componentWillMount() {
+    console.log('MOUNTING')
+    let self = this;
+    ddp.initialize()
+      .then(() => {
+        console.log('GOT IT');
+        return ddp.loginWithToken();
+      })
+      .then((res) => {
+        let state = {
+          connected: true,
+          loggedIn: false
+        };
+        if (res.loggedIn === true) {
+          state.loggedIn = true;
+          state.userId = res.userId;
+          state.username = res.username;
+          state.initialRoute = 'ChatAndroid';
+        } else {
+          state.initialRoute = 'SignupAndroid';
+        }
+        this.setState(state);
+      });
+  }
+
   render() {
     console.log('INITIAL ROUTE', this.state.initialRoute);
+    if (this.state.initialRoute == '') {
+      return (
+        <View style={{flex: 1}}>
+          <Text>LOADING...</Text>
+        </View>
+      )
+    }
     return (
       <Navigator style={{flex: 1}}
         initialRoute={{name: this.state.initialRoute}}

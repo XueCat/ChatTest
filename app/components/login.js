@@ -1,7 +1,7 @@
 'use strict';
 const USER_KEY = '@meteorChat:userKey'
 import NavigationBar from 'react-native-navbar';
-//import ddp from '../config/ddp';
+import ddp from '../config/ddp';
 import React, {
   AppRegistry,
   StyleSheet,
@@ -66,7 +66,7 @@ class Login extends React.Component{
           onPress={() => {
             let self = this;
             let {username, password} = this.state;
-          /*  if (username != '' && password != '') {
+            if (username != '' && password != '') {
               console.log('CREDS', username, password);
               ddp.loginWithPassword(username, password)
               .then((res) => {
@@ -75,7 +75,7 @@ class Login extends React.Component{
                   this.props.loggedIn(res.userId, username);
                 }
               })
-            }*/
+            }
           }}
           >
           <Text style={styles.buttonText}>Login</Text>
