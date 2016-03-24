@@ -5,6 +5,7 @@
 'use strict';
 const USER_KEY = '@meteorChat:userKey';
 import ddp from './app/config/ddp';
+import FileManager from './app/components/filemanager.js';
 import ChatAndroid from './app/components/chatAndroid.js';
 import SignupAndroid from './app/components/signupAndroid.js';
 import React, {
@@ -24,7 +25,7 @@ class ChatTest extends Component {
     super(props);
     this.state = {
       userId:1,
-      initialRoute: '',
+      initialRoute: 'ChatAndroid',
       loggedIn: false,
       username: '',
     }
@@ -83,7 +84,15 @@ class ChatTest extends Component {
                 navigator={navigator}
                 />
             );
+          } else if (route.name == 'FileManager') {
+            return (
+              <FileManager
+              userId={this.state.userId}
+              navigator={navigator}
+              />
+            );
           }
+
         }}
       />
     );

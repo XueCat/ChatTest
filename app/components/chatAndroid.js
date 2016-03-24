@@ -1,13 +1,15 @@
 'use strict';
 const USER_KEY = '@meteorChat:userKey';
-import ddp from '../config/ddp';
+//import ddp from '../config/ddp';
 import NavigationBar from 'react-native-navbar';
 import MessageBox from './messageBox';
 import InvertibleScrollView from 'react-native-invertible-scroll-view';
+
 import React, {
   AppRegistry,
   StyleSheet,
   Text,
+  Array,
   View,
   Navigator,
   TextInput,
@@ -37,7 +39,7 @@ class ChatAndroid extends React.Component{
 
   componentWillMount(){
     let self = this;
-    ddp.subscribe('messages', [])
+    /*ddp.subscribe('messages', [])
       .then(() => {
         let messagesObserver = ddp.collections.observe(() => {
           let messages = [];
@@ -51,7 +53,7 @@ class ChatAndroid extends React.Component{
           this.setState({messages: results});
           this.refs.invertible.scrollTo({x:0,y:0});
         })
-      })
+      })*/
   }
   componentWillUnmount() {
    if (this.state.messagesObserver) {
@@ -67,7 +69,7 @@ class ChatAndroid extends React.Component{
       title: 'Logout',
       tintColor: '#fff',
       handler: function onNext() {
-        ddp.logout();
+        //ddp.logout();
         self.props.navigator.push({
           name: 'SignupAndroid'
         })
@@ -80,6 +82,17 @@ class ChatAndroid extends React.Component{
           <MessageBox messages={this.state.messages} />
         </InvertibleScrollView>
         <View style={{flex: .1, backgroundColor: 'white', flexDirection: 'row'}}>
+          <TouchableHighlight
+            style={styles.file}
+            underlayColor='#f27a37'
+            onPress={() => {
+              this.props.navigator.push({
+                name: 'FileManager'
+              });
+            }}
+            >
+            <Text style={styles.buttonText}>File</Text>
+          </TouchableHighlight>
           <TextInput
             value={this.state.newMessage}
             placeholder='Say something...'
@@ -97,7 +110,7 @@ class ChatAndroid extends React.Component{
                   avatarUrl: '',
                 };
                 this.setState({newMessage: ''});
-                ddp.call('messageCreate', [options]);
+                //ddp.call('messageCreate', [options]);
               }
             }}
             underlayColor='red'>
@@ -122,6 +135,15 @@ let styles = StyleSheet.create({
     borderRadius: 8,
     color: 'black',
     backgroundColor: 'white',
+  },
+  file: {
+    flex: .2,
+    backgroundColor: "#f05b55",
+    borderRadius: 5,
+    justifyContent: 'center',
+    margin:5,
+    marginTop : 22,
+    marginBottom: 22,
   },
   button: {
     flex: .4,
