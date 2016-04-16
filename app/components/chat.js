@@ -1,30 +1,30 @@
 'use strict';
 const USER_KEY = '@meteorChat:userKey'
-import React from 'react-native';
 import NavigationBar from 'react-native-navbar';
 import ddp from '../config/ddp';
 import MessageBox from './messageBox';
 import InvertibleScrollView from 'react-native-invertible-scroll-view';
-var {
+import React, {
   AppRegistry,
   StyleSheet,
-  Text,
-  View,
-  Navigator,
   ActionSheetIOS,
-  TextInput,
-  TouchableHighlight,
+  Text,
+  Array,
+  View,
   DeviceEventEmitter,
-  ScrollView,
+  Navigator,
+  TextInput,
   ActivityIndicatorIOS,
-} = React;
+  TouchableHighlight,
+  ScrollView,
+} from 'react-native';
 
 var BUTTONS = [
   'Logout',
   'Cancel',
 ];
 var CANCEL_INDEX = 1;
-
+var RNFS = require('react-native-fs');
 class Chat extends React.Component{
   constructor(props) {
     super(props);
@@ -35,9 +35,7 @@ class Chat extends React.Component{
       keyboardOffset: 0,
     }
   }
-  componentDidMount(){
-    this.refs.invertible.scrollTo(0);
-  }
+
   showActionSheet(){
     let self = this;
     ActionSheetIOS.showActionSheetWithOptions({
@@ -59,7 +57,7 @@ class Chat extends React.Component{
       this.setState({
           keyboardOffset: newCoordinates
       })
-      this.refs.invertible.scrollTo(0);
+      this.refs.invertible.scrollTo({x:0,y:0});
   }
 
   _keyboardWillHide(e) {
@@ -67,7 +65,7 @@ class Chat extends React.Component{
           keyboardOffset: 0
       })
   }
-  componentWillMount(){
+  componentDidMount(){
     let self = this;
     ddp.subscribe('messages', [])
       .then(() => {
@@ -81,12 +79,34 @@ class Chat extends React.Component{
         this.setState({messagesObserver: messagesObserver})
         messagesObserver.subscribe((results) => {
           this.setState({messages: results});
-          this.refs.invertible.scrollTo(0);
+          this.refs.invertible.scrollTo({x:0,y:0});
         })
       })
-      _keyboardWillShowSubscription = DeviceEventEmitter.addListener('keyboardWillShow', (e) => this._keyboardWillShow(e));
-      _keyboardWillHideSubscription = DeviceEventEmitter.addListener('keyboardWillHide', (e) => this._keyboardWillHide(e));
+      DeviceEventEmitter.addListener('keyboardWillShow', (e) => this._keyboardWillShow(e));
+      DeviceEventEmitter.addListener('keyboardWillHide', (e) => this._keyboardWillHide(e));
   }
+
+  addFileMessage(filename, filepath) {
+
+    RNFS.readFile(filepath).then((data)=>{
+      var message = new Object();
+      message.filename = filename;
+      message.filedata = data;
+
+
+      let options = {
+        author: this.props.username,
+        message: JSON.stringify(message),
+        createdAt: new Date(),
+        avatarUrl: '',
+      };
+      console.log('have user', options);
+      this.setState({newMessage: ''});
+      ddp.call('messageCreate', [options]);
+
+    });
+  }
+
   componentWillUnmount() {
    if (this.state.messagesObserver) {
      this.state.messagesObserver.dispose();
@@ -109,6 +129,18 @@ class Chat extends React.Component{
           <MessageBox messages={this.state.messages} />
         </InvertibleScrollView>
         <View style={styles.inputBox}>
+          <TouchableHighlight
+            style={styles.file}
+            underlayColor='#f27a37'
+            onPress={() => {
+              this.props.navigator.push({
+                name: 'FileManager',
+                extrafun:this.addFileMessage.bind(this)
+              });
+            }}
+            >
+            <Text style={styles.buttonText}>File</Text>
+          </TouchableHighlight>
           <TextInput
             value={this.state.newMessage}
             placeholder='Say something...'
@@ -157,6 +189,15 @@ let styles = StyleSheet.create({
     color: 'black',
     backgroundColor: 'white',
   },
+  file: {
+    flex: .2,
+    backgroundColor: "#f05b55",
+    borderRadius: 10,
+    justifyContent: 'center',
+    margin:5,
+    marginTop : 15,
+    marginBottom: 15,
+  },
   buttonActive: {
     flex: .4,
     backgroundColor: "#E0514B",
@@ -166,17 +207,14 @@ let styles = StyleSheet.create({
   },
   buttonInactive: {
     flex: .4,
-    backgroundColor: "#E0514B",
-    flex: .4,
-    backgroundColor: "#E0514B",
+    backgroundColor: "#d25e5a",
     borderRadius: 6,
     justifyContent: 'center',
     margin: 10,
   },
   buttonInactive: {
     flex: .4,
-    backgroundColor: "#eeeeee",
-    borderWidth: 1,
+    backgroundColor: "#c7b3b3",
     borderColor: '#ffffff',
     borderRadius: 6,
     justifyContent: 'center',

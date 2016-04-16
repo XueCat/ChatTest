@@ -7,7 +7,10 @@ import React, {
   Component,
   StyleSheet,
   Text,
+  Alert,
   View,
+  ToastAndroid,
+  Platform,
   Navigator,
   ScrollView,
   AsyncStorage,
@@ -16,31 +19,48 @@ import React, {
 } from 'react-native';
 
 var RNFS = require('react-native-fs');
-var TimerMixin = require('react-timer-mixin');
-
 var Thumb = React.createClass({
 
   render: function() {
     return (
       <TouchableOpacity
         style={styles.itemleft}
-        onPress={()=> {
-          this.props.node.parent.props.navigator.push({
-            name: 'ChatAndroid',
-            sceneConfig: Navigator.SceneConfigs.FloatFromBottom,
-            extras:{ntype:2,title:this.props.node.name,data:this.props.node.path}
+        onPress={() => {
+          RNFS.readFile(this.props.node.path).then((data)=>{
+            Alert.alert(
+                this.props.node.name,
+                data,
+                [
+                  {text: 'Cancel', onPress: () => console.log('Cancel Pressed!')},
+                  {text: 'OK', onPress: () => console.log('OK Pressed!')},
+                ]
+              )
           })
         }} >
-        <View style={{flexDirection:'column', backgroundColor:'#dbecf0'}} >
-          <View>
-            <Text
-              style={{fontSize: 30, textAlign: 'left',}}>
-              {this.props.node.name}
+        <View style={{flex:1, flexDirection:'row', backgroundColor:'#dbecf0'}} >
+          <View style={{flex:9, justifyContent:'flex-start', flexDirection:'column', backgroundColor:'#dbecf0'}} >
+            <View>
+              <Text
+                style={{fontSize: 30, textAlign: 'left',}}>
+                {this.props.node.name}
               </Text>
+            </View>
+            <View>
+              <Text style={{fontSize:10, marginRight:5}}>{this.props.node.path}</Text>
+            </View>
           </View>
-          <View>
-            <Text style={{fontSize:14, marginRight:5}}>{this.props.node.path}</Text>
-          </View>
+
+          <TouchableHighlight
+            style={styles.button}
+            underlayColor='#a5a5a5'
+            onPress={()=> {
+              this.props.node.parent.props.navigator.pop();
+              this.props.node.parent.props.extrafun(
+                this.props.node.name,
+                this.props.node.path);
+            }} >
+            <Text style={styles.buttonText}>Add File</Text>
+          </TouchableHighlight>
         </View>
       </TouchableOpacity>
     );
@@ -58,35 +78,20 @@ export default class FileManager extends React.Component {
       filelist: [],
     };
   };
-  componentWillUnmount() {
-    this.timer && clearTimeout(this.timer);
-  }
+
   //mixins: [TimerMixin];
-  componentWillMount() {
+  componentDidMount() {
     let self = this;
-    this.timer = setTimeout(
-      ()=>{
-        if (!this.state.isview) {
-          this.setState({isview:true});
-        }
-      },
-      100
-    );
+    let fileList = this.state.filelist
 
-    RNFS.readDir(RNFS.DocumentDirectoryPath)
+    RNFS.readDir(RNFS.CachesDirectoryPath)
     .then((result) => {
-      console.log('is find data', result);
-      return Promise.all([RNFS.stat(result[0].path), result[0].name, result[0].path]);
-    })
-    .then((statResult) => {
-      if (statResult[0].isFile()) {
-        var tn = statResult[1];
-        var tp = statResult[2];
-
-        self.state.filelist.push({name:tn, path:tp, parent:self});
-        self.setState({isview:true});
-      }
-      return 'no file';
+      result.map(file => {
+        if (file.isFile()) {
+          fileList.push({name:file.name, path:file.path, parent:self});
+          self.setState({filelist:fileList});
+        }
+      });
     });
   }
 
@@ -98,14 +103,35 @@ export default class FileManager extends React.Component {
       title: 'Back',
       tintColor: '#fff',
       handler: function onNext() {
-        self.props.navigator.push({
-          name: 'ChatAndroid'
-        })
+        self.props.navigator.pop();
       }
     };
+    var rightButtonConfig = {
+      title: 'Create Test',
+      tintColor: '#fff',
+      handler: function onNext() {
+        var path = RNFS.CachesDirectoryPath + '/test.txt';
+        RNFS.writeFile(path, 'it is a test', 'utf8')
+          .then((success) => {
+            if (Platform.OS === 'android') {
+                ToastAndroid.show('Create Test File',ToastAndroid.SHORT);
+            } else {
+              Alert.alert(
+                'Create Test File',
+                'Create success!',
+                [
+                  {text: 'OK', onPress: () => console.log('OK Pressed!')},
+                ]
+              );
+            }
 
-    if (this.state.isview) {
-      this.timer && clearTimeout(this.timer);
+            self.setState({isview:false});
+            console.log('FILE WRITTEN!');
+          })
+          .catch((err) => {
+            console.log(err.message);
+          });
+      }
     };
 
     let havelist = <View></View>;
@@ -114,12 +140,12 @@ export default class FileManager extends React.Component {
     if (this.state.filelist.length > 0) {
         havelist = this.state.filelist.map(createThumbRow);
     }  else {
-        nolist = <View style={{flex: 1, alignItems:'center'}}><Text>NOFILE...</Text></View>;
+        nolist = <View style={{flex: 1, alignItems:'center', justifyContent:'center'}}><Text style={{marginTop:20, fontSize:35}}>NO  FILE...</Text></View>;
     }
 
     return (
       <View style={{flex: 1, backgroundColor:'#c2ede9'}}>
-        <NavigationBar title={titleConfig} leftButton={leftButtonConfig} tintColor="#1A263F"/>
+        <NavigationBar title={titleConfig} leftButton={leftButtonConfig} rightButton={rightButtonConfig} tintColor="#1A263F"/>
         <ScrollView style={{flex: 8}}>
           {havelist}
           {nolist}
@@ -134,11 +160,22 @@ const styles = StyleSheet.create({
    container: {
     flex: 1,
    },
+   button: {
+    flex:1,
+    height:55,
+    backgroundColor: '#66e4b3',
+    alignItems: 'center',
+    justifyContent:'center',
+  },
    itemleft: {
     backgroundColor:'#e6f0ec',
     justifyContent: 'flex-start',
     alignItems: 'stretch',
     margin: 10,
     height:60,
+   },
+   buttonText: {
+     textAlign: 'center',
+     color: 'white',
    },
  });

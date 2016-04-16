@@ -6,6 +6,8 @@ import React, {
   AppRegistry,
   StyleSheet,
   Text,
+  Alert,
+  ToastAndroid,
   Animated,
   Easing,
   Image,
@@ -14,6 +16,8 @@ import React, {
   View,
   Navigator,
 } from 'react-native';
+
+var RNFS = require('react-native-fs');
 
 class Message extends React.Component{
   constructor(props) {
@@ -30,6 +34,55 @@ class Message extends React.Component{
      ).start();                // Don't forget start!
   }
   render(){
+
+    let messageview = <View></View>;
+
+    let isJson = function(obj){
+            var isjson = typeof(obj) == "object" && Object.prototype.toString.call(obj).toLowerCase() == "[object object]" && !obj.length
+            return isjson;
+        }
+
+    let IsJsonString = function (str) {
+        try {
+            JSON.parse(str);
+        } catch (e) {
+            return false;
+        }
+        return true;
+    }
+
+    if (IsJsonString(this.props.msg.message)) {
+      let jmessage = JSON.parse(this.props.msg.message);
+      messageview = (<View>
+                        <TouchableHighlight
+                          underlayColor="#e0eef1"
+                          onPress={()=>Alert.alert(
+                            '是否下载文件?',
+                            'Tips',
+                            [
+                            {text:'取消',onPress:()=>{}},
+                            {text:'确定',onPress:()=>{
+                              var path = RNFS.CachesDirectoryPath + '/' +jmessage.filename;
+
+                              RNFS.writeFile(path, jmessage.filedata, 'utf8')
+                                .then((success) => {
+                                  ToastAndroid.show('成功下载',ToastAndroid.SHORT);
+                                })
+                                .catch((err) => {
+                                  ToastAndroid.show('文件保存失败',ToastAndroid.SHORT);
+                                });
+
+                            }}
+                          ])}>
+                          <Image
+                            source={require('./file.png')} />
+                        </TouchableHighlight>
+                        <Text style={styles.messageText}>{jmessage.filename}</Text>
+                      </View>);
+    } else {
+      messageview = <Text style={styles.messageText}>{this.props.msg.message}</Text>;
+    }
+
     return (
       <Animated.View
         style={{
@@ -53,7 +106,7 @@ class Message extends React.Component{
               <Text style={styles.sent}>{moment(this.props.createdAt).fromNow()}</Text>
             </View>
             <View style={styles.messageView}>
-              <Text style={styles.messageText}>{this.props.msg.message}</Text>
+              {messageview}
             </View>
           </View>
         </View>

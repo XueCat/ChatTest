@@ -25,7 +25,7 @@ class ChatTest extends Component {
     super(props);
     this.state = {
       userId:1,
-      initialRoute: 'ChatAndroid',
+      initialRoute: '',
       loggedIn: false,
       username: '',
     }
@@ -56,6 +56,10 @@ class ChatTest extends Component {
       });
   }
 
+  extraFun(title, data) {
+
+  }
+
   render() {
     console.log('INITIAL ROUTE', this.state.initialRoute);
     if (this.state.initialRoute == '') {
@@ -67,7 +71,7 @@ class ChatTest extends Component {
     }
     return (
       <Navigator style={{flex: 1}}
-        initialRoute={{name: this.state.initialRoute}}
+        initialRoute={{name: this.state.initialRoute, extrafun:this.extraFun}}
         renderScene={(route, navigator) => {
           if (route.name == 'ChatAndroid') {
             return (
@@ -88,6 +92,7 @@ class ChatTest extends Component {
             return (
               <FileManager
               userId={this.state.userId}
+              extrafun={route.extrafun}
               navigator={navigator}
               />
             );

@@ -1,6 +1,6 @@
 'use strict';
 const USER_KEY = '@meteorChat:userKey';
-//import ddp from '../config/ddp';
+import ddp from '../config/ddp';
 import NavigationBar from 'react-native-navbar';
 import MessageBox from './messageBox';
 import InvertibleScrollView from 'react-native-invertible-scroll-view';
@@ -23,6 +23,8 @@ var BUTTONS = [
 ];
 var CANCEL_INDEX = 1;
 
+var RNFS = require('react-native-fs');
+
 class ChatAndroid extends React.Component{
   constructor(props) {
     super(props);
@@ -39,7 +41,7 @@ class ChatAndroid extends React.Component{
 
   componentWillMount(){
     let self = this;
-    /*ddp.subscribe('messages', [])
+    ddp.subscribe('messages', [])
       .then(() => {
         let messagesObserver = ddp.collections.observe(() => {
           let messages = [];
@@ -53,7 +55,7 @@ class ChatAndroid extends React.Component{
           this.setState({messages: results});
           this.refs.invertible.scrollTo({x:0,y:0});
         })
-      })*/
+      })
   }
   componentWillUnmount() {
    if (this.state.messagesObserver) {
@@ -61,15 +63,35 @@ class ChatAndroid extends React.Component{
    }
   }
 
+  addFileMessage(filename, filepath) {
+
+    RNFS.readFile(filepath).then((data)=>{
+      var message = new Object();
+      message.filename = filename;
+      message.filedata = data;
+
+
+      let options = {
+        author: this.props.username,
+        message: JSON.stringify(message),
+        createdAt: new Date(),
+        avatarUrl: '',
+      };
+      console.log('have user', options);
+      this.setState({newMessage: ''});
+      ddp.call('messageCreate', [options]);
+
+    });
+  }
+
   render(){
-    console.log('MESSAGES', this.state.messages);
     let self = this;
     let titleConfig = { title: 'Meteor Chat', tintColor: 'white' };
     var rightButtonConfig = {
       title: 'Logout',
       tintColor: '#fff',
       handler: function onNext() {
-        //ddp.logout();
+        ddp.logout();
         self.props.navigator.push({
           name: 'SignupAndroid'
         })
@@ -87,7 +109,8 @@ class ChatAndroid extends React.Component{
             underlayColor='#f27a37'
             onPress={() => {
               this.props.navigator.push({
-                name: 'FileManager'
+                name: 'FileManager',
+                extrafun:this.addFileMessage.bind(this)
               });
             }}
             >
@@ -110,7 +133,7 @@ class ChatAndroid extends React.Component{
                   avatarUrl: '',
                 };
                 this.setState({newMessage: ''});
-                //ddp.call('messageCreate', [options]);
+                ddp.call('messageCreate', [options]);
               }
             }}
             underlayColor='red'>
